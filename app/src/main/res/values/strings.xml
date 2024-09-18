@@ -8,4 +8,6 @@
     <string name="previous">Previous</string>
     <string name="new_task">New task</string>
     <string name="tasks">Задачи</string>
+    <string name="open">Открыть</string>
+    <string name="save">Сохранить</string>
 </resources>
