@@ -62,9 +62,6 @@ class TodolistAdapter(private val context: Context, private val dataSource: Arra
 
                 override fun afterTextChanged(s: Editable?) {}
             })
-        /*if (!hasFocus) {
-            item.text = v.findViewById<TextView>(R.id.textDescription).text.toString()
-        }*/
 
         view.findViewById<ImageView>(R.id.delete).setOnClickListener() {
             dataSource.remove(item)

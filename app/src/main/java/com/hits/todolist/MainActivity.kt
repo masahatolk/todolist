@@ -8,7 +8,6 @@ import android.widget.ListView
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.ui.AppBarConfiguration
 import com.hits.todolist.databinding.ActivityMainBinding
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -18,7 +17,6 @@ import kotlinx.serialization.json.Json
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private lateinit var listView: ListView
     private val list = ArrayList<Task>()
@@ -53,7 +51,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.open -> openJson()
-            R.id.save -> save()
+            R.id.save -> saveJson()
         }
         return super.onOptionsItemSelected(item)
     }
@@ -66,9 +64,9 @@ class MainActivity : AppCompatActivity() {
             val uri = data?.data ?: return@registerForActivityResult
 
             val file = contentResolver.openInputStream(uri) ?: return@registerForActivityResult
-            val xxx: XXX = Json.decodeFromString(file.bufferedReader().readText())
+            val extraTemp: ExtraClass = Json.decodeFromString(file.bufferedReader().readText())
             list.clear()
-            list.addAll(xxx.aaa)
+            list.addAll(extraTemp.temp)
             adapter.notifyDataSetChanged()
         }
     }
@@ -82,7 +80,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Serializable
-    data class XXX(val aaa: ArrayList<Task>)
+    data class ExtraClass(val temp: ArrayList<Task>)
 
     private val launcher2 = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -92,12 +90,12 @@ class MainActivity : AppCompatActivity() {
             val uri = data?.data ?: return@registerForActivityResult
 
             val writer = contentResolver.openOutputStream(uri)?.bufferedWriter()
-            writer?.write(Json.encodeToString(XXX(list)))
+            writer?.write(Json.encodeToString(ExtraClass(list)))
             writer?.close()
         }
     }
 
-    private fun save() {
+    private fun saveJson() {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "application/json"
