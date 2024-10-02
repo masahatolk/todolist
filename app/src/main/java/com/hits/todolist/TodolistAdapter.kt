@@ -12,12 +12,17 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
-import androidx.core.text.set
+import androidx.lifecycle.LifecycleCoroutineScope
 import com.hits.todolist.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class TodolistAdapter(private val context: Context, private val dataSource: ArrayList<Task>) :
-    BaseAdapter() {
+class TodolistAdapter(
+    private val context: Context,
+    private val dataSource: ArrayList<Task>,
+    private val service: TodolistService,
+    private val scope: LifecycleCoroutineScope
+) : BaseAdapter() {
 
     private val inflater: LayoutInflater =
         context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -41,11 +46,15 @@ class TodolistAdapter(private val context: Context, private val dataSource: Arra
         val view = inflater.inflate(R.layout.task, parent, false)
         val item = dataSource[position]
 
-        view.findViewById<CheckBox>(R.id.checkBox).isChecked = item.isChecked
+        view.findViewById<CheckBox>(R.id.checkBox).isChecked = item.isDone
         view.findViewById<EditText>(R.id.textDescription).setText(item.text)
 
         view.findViewById<CheckBox>(R.id.checkBox).setOnClickListener() {
-            item.isChecked = !item.isChecked
+            item.isDone = !item.isDone
+
+            scope.launch(Dispatchers.IO + exceptionHandler) {
+                service.changeStateTodoItem(item.id)
+            }
         }
         view.findViewById<EditText>(R.id.textDescription)
             .addTextChangedListener(object : TextWatcher {
@@ -54,17 +63,26 @@ class TodolistAdapter(private val context: Context, private val dataSource: Arra
                     start: Int,
                     count: Int,
                     after: Int
-                ) {}
-
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                    item.text = view.findViewById<TextView>(R.id.textDescription).text.toString()
+                ) {
                 }
 
-                override fun afterTextChanged(s: Editable?) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+                override fun afterTextChanged(s: Editable?) {
+                    item.text = view.findViewById<TextView>(R.id.textDescription).text.toString()
+
+                    scope.launch(Dispatchers.IO + exceptionHandler) {
+                        service.editTextTodoItem(item.id, item.text)
+                    }
+                }
             })
 
-        view.findViewById<ImageView>(R.id.delete).setOnClickListener() {
+        view.findViewById<ImageView>(R.id.delete).setOnClickListener {
             dataSource.remove(item)
+            scope.launch(Dispatchers.IO + exceptionHandler) {
+                service.deleteTodoItem(item.id)
+            }
+
             notifyDataSetChanged()
         }
         return view

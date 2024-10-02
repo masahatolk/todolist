@@ -1,9 +1,9 @@
 package com.hits.todolist
 
-import kotlinx.serialization.Serializable
+import java.util.UUID
 
-@Serializable
-class Task {
-    var isChecked: Boolean = false
+class Task(
+    var id: String = UUID.randomUUID().toString(),
+    var isDone: Boolean = false,
     var text: String = ""
-}
+)
