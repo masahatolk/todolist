@@ -103,9 +103,34 @@ h1, h4 {
     border-radius: 10px;
 }
 
-#description {
-    width: 80%;
+textarea {
+    resize: none;
+}
 
+#inputGroupSelect1, #inputGroupSelect2 {
+    width: auto;
+    background: none;
+}
+
+.firstGroup {
+    margin-left: 15px;
+}
+
+#creationDate {
+    margin-top: 10px;
+}
+
+.date {
+    width: 80%;
+}
+
+select, form {
+    margin-left: 15px;
+}
+
+.horizontal {
+    display: flex;
+    align-items: center;
 }
 
 #label {
