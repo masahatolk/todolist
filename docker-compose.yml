@@ -1,0 +1,24 @@
+﻿services:
+  todolist:
+    container_name: todolist
+    build: ./WebApplication2
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Release
+    ports:
+      - "80:8080"
+    depends_on:
+      - todolist-db
+  todolist-db:
+    container_name: todolist-db
+    image: postgres:15
+    environment:
+      POSTGRES_DB: todolist
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+    ports:
+      - "5435:5432"
+    volumes:
+      - todolist-db:/var/lib/postgresql/data
+
+volumes:
+  todolist-db: { }
