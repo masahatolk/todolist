@@ -20,7 +20,7 @@ img {
     left: 50%;
     background: white;
     border-radius: 20px;
-    min-width: 450px;
+    min-width: 550px;
     position: absolute;
     min-height: 100px;
     transform: translate(-50%, -50%);
@@ -70,7 +70,7 @@ section {
     align-items: center;
 }
 
-h1, h4 {
+h2, h4 {
     color: #504f4f;
 }
 
@@ -107,9 +107,13 @@ textarea {
     resize: none;
 }
 
-#inputGroupSelect1, #inputGroupSelect2 {
+#priority, #status {
     width: auto;
     background: none;
+}
+
+#dateTime {
+    padding-left: 15px;
 }
 
 .firstGroup {
@@ -135,6 +139,10 @@ select, form {
 
 #label {
     width: 93%;
+}
+
+#name {
+    margin-right: 10px;
 }
 
 input[type="text"] {
@@ -190,9 +198,6 @@ span {
     stroke: coral;
 }
 
-.input-group {
-    height: 6vh;
-}
 
 .btn-primary {
     --bs-btn-bg: lightsalmon;
