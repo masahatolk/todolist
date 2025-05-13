@@ -11,6 +11,13 @@ let modalPriority = document.getElementById('priority')
 let modalStatus = document.getElementById('status')
 let modalDeadline = document.getElementById('deadline')
 let modalDescription = document.getElementById('description')
+let modalCreatedOn = document.getElementById('createdOn')
+let modalModifiedOn = document.getElementById('modifiedOn')
+
+let isNewTask = 0
+let currentTaskElement = document.createElement('div')
+currentTaskElement.className = 'task'
+let idTask
 
 class Task {
     constructor(name, description, deadline, status, priority) {
@@ -52,10 +59,16 @@ function getPriority(value) {
 
 const host = "http://localhost:80"
 
+addBtn.addEventListener('click', (e) => {
+    isNewTask = 1;
+    setDefaultValuesToModal();
+    modalBody.show();
+})
+
 modal.addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    if (modal.children[0].children[0].children[0].value.length < 4) {
+    if (modalName.length < 4) {
         alert("Название задачи должно содержать минимум 4 символа.");
         return;
     }
@@ -64,27 +77,58 @@ modal.addEventListener('submit', async function (e) {
     const priority = getPriority(modalPriority.value)
     const deadline = modalDeadline.value?.trim() === "" ? null : modalDeadline.value
 
-    let task = new Task(modalName.value, modalDescription.value, deadline, status, priority);
+    let task = new Task(modalName.value, modalDescription.value, new Date(deadline).toISOString(), status, priority);
 
-    await fetch(host + "/tasks",
-        {
+    if(isNewTask) {
+
+        const response = await fetch(host + "/tasks", {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                name: modalName.value,
-                description: modalDescription.value,
-                deadline: deadline,
-                status: status,
-                priority: priority,
+                name: task.name,
+                description: task.description,
+                deadline: task.deadline,
+                status: task.status,
+                priority: task.priority,
             }),
-        })
+        });
 
-    table.unshift(task)
+        if (response.ok) {
+            const newTask = await response.json();
+            task.id = newTask.id;
+            task.createdOn = newTask.createdOn;
+            task.modifiedOn = newTask.modifiedOn;
+        } else console.error("Ошибка при создании задачи");
 
-    let htmlTask = createHtmlTask(task)
-    todolist.children[2].append(htmlTask)
+        table.unshift(task)
+
+        let htmlTask = createHtmlTask(task)
+        htmlTask.dataset.id = task.id
+        todolist.children[2].append(htmlTask)
+    }
+    else {
+        const response = await fetch(host + `/tasks/edit/${idTask}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: task.name,
+                    description: task.description,
+                    deadline: task.deadline,
+                    status: task.status,
+                    priority: task.priority,
+                })
+            }).then(r => r.text())
+
+        if (response.ok) {
+            task = await response.json();
+            currentTaskElement = createHtmlTask(task)
+        } else console.error("Ошибка при редактировании задачи");
+    }
 })
 
 
@@ -97,18 +141,54 @@ function createHtmlTask(task) {
     return newTask
 }
 
+function formatDate(isoString) {
+    const date = new Date(isoString);
+
+    const get = {
+            hours: date.getUTCHours(),
+            minutes: date.getUTCMinutes(),
+            day: date.getUTCDate(),
+            month: date.getUTCMonth() + 1,
+            year: date.getUTCFullYear()
+        }
+
+    const pad = n => n.toString().padStart(2, '0');
+
+    return `${pad(get.day)}.${pad(get.month)}.${get.year} ${pad(get.hours)}:${pad(get.minutes)}`;
+}
+
+
 function setValuesToShortTask(newTask, task) {
-    if(task.status === 'COMPLETED' || task.status === 'LATE') {
+    if(task.status === 'Completed' || task.status === 'Late') {
         newTask.children[0].children[0].children[0].checked = true
     }
-    newTask.children[0].children[1].children[1].children[0].value = task.deadline
-    //newTask.children[0].children[0].children[0].checked = task.isDone
-    //newTask.children[0].children[1].value = task.text
+    newTask.children[0].children[1].children[0].textContent = task.name
+    if(task.deadline === null) {
+        newTask.children[0].children[1].children[1].children[0].textContent = "-"
+    }
+    else {
+        newTask.children[0].children[1].children[1].children[0].textContent = formatDate(task.deadline)
+    }
+    task.status = defineStatus(task.deadline, task.status)
+    newTask.children[0].children[1].children[1].children[1].textContent = Status[task.status]
 }
 
 function setValuesToModal(task) {
-    modal.children[0].children[0].children[0].value = task.name
+    modalName.value = task.name
+    modalDescription.value = task.description
+    modalDeadline.value = task.deadline
+    modalStatus.value = task.status
+    modalPriority.value = task.priority
+    modalCreatedOn.value = formatDate(task.createdOn)
+    modalModifiedOn.value = formatDate(task.modifiedOn)
+}
 
+function setDefaultValuesToModal() {
+    modalName.value = "Новая задача"
+    modalDescription.value = ""
+    modalDeadline.value = ""
+    modalStatus.value = "Active"
+    modalPriority.value = "Normal"
 }
 
 function addListenersToModal(modal, task) {
@@ -130,15 +210,21 @@ function addListenersToNewTask(newTask, task) {
     })
 
     newTask.children[0].children[0].children[0].addEventListener('change', (event) => {
-        task.isDone = newTask.children[0].children[0].children[0].checked
+        task.status = switchStatus (task.deadline, task.status)
+        task.status = defineStatus(task.deadline, task.status)
 
         fetch(host + `/tasks/${task.id}/state`,
             {
-                method: 'PATCH'
+                method: 'PATCH',
+                body: String({Status: task.status})
             }).then(r => r.text())
     })
 
     newTask.children[0].children[1].addEventListener('click', (event) => {
+        isNewTask = 0
+        currentTaskElement.innerHTML = newTask.innerHTML
+        idTask = event.currentTarget.dataset.id
+
         setValuesToModal(task)
         modalBody.show()
     })
@@ -173,22 +259,23 @@ function addEmptyTask() {
 
 // при нажатии на чекбокс
 function switchStatus(deadline, status) {
-    if (status === Status.Active) {
-        status = Status.Completed
-    } else if (status === Status.Overdue) {
-        status = Status.Late
+    if (status === "Active") {
+        return "Completed"
+    } else if (status === "Overdue") {
+        return "Late"
     } else {
-        status = Status.Active
-        defineStatus(deadline, status)
+        return "Active"
     }
 }
 
 // выполнять при каждой загрузке списка задач
 function defineStatus(deadline, status) {
-    let currDate = Date.now()
-    if (status === Status.Active && deadline < currDate) {
-        status = Status.Overdue
+    let currDate = new Date().toISOString();
+
+    if (status === "Active" && deadline < currDate) {
+        return "Overdue"
     }
+    else return status
 }
 
 

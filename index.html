@@ -18,7 +18,7 @@
 <body>
 
 <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
-     aria-labelledby="staticBackdropLabel" aria-hidden="true">
+     aria-labelledby="staticBackdropLabel">
     <form class="modal-dialog modal-dialog-centered" id="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -59,11 +59,11 @@
                           rows="7"></textarea>
 
                 <div class="firstGroup" id="dateGroup">
-                    <label style="font-size: 15px;" class="text-muted" id="creationDate"> Дата создания
-                        <input class="form-control date" type="text" value="" disabled readonly>
+                    <label style="font-size: 15px;" class="text-muted">Дата создания
+                        <input class="form-control date" type="text" id="createdOn" value="" disabled readonly>
                     </label>
                     <label style="font-size: 15px;" class="text-muted">Дата редактирования
-                        <input class="form-control date" type="text" value="" disabled readonly>
+                        <input class="form-control date" type="text"  id="modifiedOn" value="" disabled readonly>
                     </label>
                 </div>
 
@@ -102,7 +102,7 @@
         </div>
     </div>
 
-    <button class="btn btn-primary" type="button" id="addBtn" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+    <button class="btn btn-primary" type="button" id="addBtn">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg"
              viewBox="0 0 16 16">
             <path fill-rule="evenodd"
