@@ -1,0 +1,233 @@
+body {
+    position: relative;
+    height: 100vh;
+    min-height: 300px;
+    background: linear-gradient(30deg, plum, burlywood);
+}
+
+img {
+    position: absolute;
+    z-index: -1;
+    transform: scale(40%);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 35%;
+    height: 70%;
+    top: 50%;
+    left: 50%;
+    background: white;
+    border-radius: 20px;
+    min-width: 550px;
+    position: absolute;
+    min-height: 100px;
+    transform: translate(-50%, -50%);
+}
+
+.caption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+    margin-left: 25px;
+    margin-right: 25px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.calendar {
+    display: flex;
+    flex-direction: column;
+    margin: 25px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.week {
+    display: flex;
+    justify-content: space-between;
+}
+
+.list {
+    overflow: auto;
+}
+
+.list::-webkit-scrollbar {
+    width: 0;
+}
+
+.task {
+    padding: 20px 20px;
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h2, h4 {
+    color: #504f4f;
+}
+
+#openBtn, #saveBtn {
+    font-size: 1.2em;
+}
+
+#openBtn {
+    margin-right: 5px;
+}
+
+#saveBtn {
+    margin-left: 5px;
+}
+
+#addBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+    border-radius: 10px;
+    height: 40px;
+    width: 40px;
+    z-index: 1;
+}
+
+#deleteBtn {
+    border-radius: 10px;
+}
+
+textarea {
+    resize: none;
+}
+
+#priority, #status {
+    width: auto;
+    background: none;
+}
+
+#dateTime {
+    padding-left: 15px;
+}
+
+.firstGroup {
+    margin-left: 15px;
+}
+
+#creationDate {
+    margin-top: 10px;
+}
+
+.date {
+    width: 80%;
+}
+
+select, form {
+    margin-left: 15px;
+}
+
+.horizontal {
+    display: flex;
+    align-items: center;
+}
+
+#label {
+    width: 93%;
+}
+
+#name {
+    margin-right: 10px;
+}
+
+input[type="text"] {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0;
+}
+
+span {
+    user-select: none;
+}
+
+.form-check-input {
+    width: 3vh;
+    height: 3vh;
+}
+
+.transition {
+    transition: 0.15s;
+}
+
+.form-check-input:checked {
+    background-color: lightsalmon;
+    border-color: lightsalmon;
+}
+
+.form-check-input:focus {
+    border-color: #ffbca6;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0);
+}
+
+.form-control:focus {
+    border-color: lightsalmon;
+    box-shadow: 0 0 0 0.25rem rgb(255, 161, 0, 0);
+}
+
+.bi-x-lg {
+    color: lightsalmon;
+    stroke: lightsalmon;
+    stroke-width: 3;
+}
+
+.bi-plus-lg {
+    stroke: white;
+    stroke-width: 3;
+    transform: scale(120%);
+}
+
+.bi-x-lg:hover {
+    color: coral;
+    stroke: coral;
+}
+
+
+.btn-primary {
+    --bs-btn-bg: lightsalmon;
+    --bs-btn-border-color: lightsalmon;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: coral;
+    --bs-btn-hover-border-color: coral;
+    --bs-btn-focus-shadow-rgb: 49, 132, 253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: coral;
+    --bs-btn-active-border-color: coral;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: coral;
+    --bs-btn-disabled-border-color: coral;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: lightsalmon;
+    --bs-btn-border-color: lightsalmon;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: lightsalmon;
+    --bs-btn-hover-border-color: lightsalmon;
+    --bs-btn-focus-shadow-rgb: 13, 110, 253;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: lightsalmon;
+    --bs-btn-active-border-color: lightsalmon;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: lightsalmon;
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: lightsalmon;
+    --bs-gradient: none;
+}
