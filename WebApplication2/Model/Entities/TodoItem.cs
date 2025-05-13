@@ -11,6 +11,6 @@ public class TodoItem
     public DateTime? Deadline { get; set; }
     public Status Status { get; set; } = Status.Active;
     public Priority Priority { get; set; } = Priority.Medium;
-    public DateTime CreatedOn { get; set; } = DateTime.Now;
-    public DateTime? ModifiedOn { get; set; } = DateTime.Now;
+    public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+    public DateTime? ModifiedOn { get; set; }
 }
