@@ -16,7 +16,7 @@ public class ListController : Controller
         _dbContext = dbContext;
     }
 
-    // Просмотр списка дел
+    // Просмотр списка задач
     [HttpGet]
     [Route("list")]
     public async Task<TodoListResponse> Get()
@@ -24,35 +24,43 @@ public class ListController : Controller
         var list = await _dbContext.Tasks.ToListAsync();
         return new TodoListResponse(list);
     }
+    
+    // Просмотр выбранной задачи
+    [HttpGet]
+    [Route("{id:guid}")]
+    public async Task<TodoItem?> GetTask(Guid id)
+    {
+        var todoItem = _dbContext.Tasks.FirstOrDefault(el => el.Id == id);
+        
+        await _dbContext.SaveChangesAsync();
+        return todoItem;
+    }
 
-    // Добавление дела
+
+    // Добавление задачи
     [HttpPost]
     public async Task<ActionResult> AddTodoItem([FromBody] CreateTodoRequest request)
     {
-        var parseValid = Guid.TryParse(request.Id, out var id);
-        if (!parseValid)
+        var newItem = new TodoItem
         {
-            return BadRequest($"Invalid Task Id: {request.Id}");
-        }
-
-        await _dbContext.Tasks.AddAsync(new TodoItem
-        {
-            Id = id,
+            Id = Guid.NewGuid(),
             Name = request.Name,
             Description = request.Description,
             Deadline = request.Deadline,
             Status = request.Status,
             Priority = request.Priority,
-            CreatedOn = request.CreatedOn,
-            ModifiedOn = request.ModifiedOn,
-        });
+            CreatedOn = DateTime.UtcNow,
+            ModifiedOn = DateTime.UtcNow,
+        };
 
+        await _dbContext.Tasks.AddAsync(newItem);
         await _dbContext.SaveChangesAsync();
-        return Ok();
+
+        return Ok(newItem);
     }
 
 
-    // Удаление дела
+    // Удаление задачи
     [HttpDelete]
     [Route("{id:guid}")]
     public async Task DeleteTodoItem(Guid id)
@@ -63,27 +71,44 @@ public class ListController : Controller
         await _dbContext.SaveChangesAsync();
     }
 
-
-    // Редактирование текста-описания дела
+    // Редактирование задачи
     [HttpPatch]
-    [Route("{id:guid}/text")]
-    public async Task EditTextTodoItem(Guid id, [FromBody] string text)
+    [Route("edit/{id:guid}")]
+    public async Task<ActionResult> EditTextTodoItem(Guid id, [FromBody] CreateTodoRequest request)
     {
         var todoItem = _dbContext.Tasks.FirstOrDefault(el => el.Id == id);
-        if (todoItem != null) todoItem.Name = text;
+        
+        if (todoItem != null)
+        {
+            todoItem.Name = request.Name;
+            todoItem.Description = request.Description;
+            todoItem.Deadline = request.Deadline;
+            todoItem.Status = request.Status;
+            todoItem.Priority = request.Priority;
+            todoItem.ModifiedOn = DateTime.UtcNow;
+        }
 
         await _dbContext.SaveChangesAsync();
+        return Ok(todoItem);
     }
 
 
     // Изменение состояния дела
     [HttpPatch]
     [Route("{id:guid}/state")]
-    public async Task ChangeStateTodoItem(Guid id)
+    public async Task ChangeStateTodoItem(Guid id, [FromBody] String status)
     {
         var todoItem = _dbContext.Tasks.FirstOrDefault(el => el.Id == id);
+        Status todoItemStatus;
         if (todoItem != null)
-            todoItem.Status = (todoItem.Status == Status.Active) ? Status.Completed : Status.Active;
+        {
+            bool success = Enum.TryParse(status, out todoItemStatus);
+
+            if (success)
+            {
+                todoItem.Status = todoItemStatus;
+            }
+        }
 
         await _dbContext.SaveChangesAsync();
     }
