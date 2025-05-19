@@ -96,20 +96,16 @@ public class ListController : Controller
     // Изменение состояния дела
     [HttpPatch]
     [Route("{id:guid}/state")]
-    public async Task ChangeStateTodoItem(Guid id, [FromBody] String status)
+    public async Task<ActionResult> ChangeStateTodoItem(Guid id, [FromBody] Status newStatus)
     {
         var todoItem = _dbContext.Tasks.FirstOrDefault(el => el.Id == id);
-        Status todoItemStatus;
+
         if (todoItem != null)
         {
-            bool success = Enum.TryParse(status, out todoItemStatus);
-
-            if (success)
-            {
-                todoItem.Status = todoItemStatus;
-            }
+            todoItem.Status = newStatus;
         }
-
+        
         await _dbContext.SaveChangesAsync();
+        return Ok(newStatus);
     }
 }
