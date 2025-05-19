@@ -2,7 +2,6 @@ let addBtn = document.getElementById('addBtn')
 let saveBtn = document.getElementById('saveBtn')
 let todolist = document.getElementById('todolist')
 
-const modal = document.getElementById('modal');
 const staticBackdrop = document.getElementById('staticBackdrop');
 const modalBody = new bootstrap.Modal(staticBackdrop);
 
@@ -18,6 +17,11 @@ let isNewTask = 0
 let currentTaskElement = document.createElement('div')
 currentTaskElement.className = 'task'
 let idTask
+
+modalDeadline.addEventListener('keydown', (e) => e.preventDefault());
+
+const toastElement = document.getElementById('toast')
+const toast =  new bootstrap.Toast(toastElement)
 
 class Task {
     constructor(name, description, deadline, status, priority) {
@@ -35,14 +39,21 @@ const Status = {
     Active: 'Активно',
     Completed: 'Выполнено',
     Overdue: 'Просрочено',
-    Late: 'Выполнено с опозданием'
+    Late: 'Сдано с опозданием'
 };
 
 const Priority = {
-    Low: 'Низкий',
     Medium: 'Средний',
+    Low: 'Низкий',
     High: 'Высокий',
     Critical: 'Критический'
+};
+
+const macros = {
+    '!1': 'Critical',
+    '!2': 'High',
+    '!3': 'Medium',
+    '!4': 'Low'
 };
 
 function getKeyByValue(obj, value) {
@@ -65,53 +76,32 @@ addBtn.addEventListener('click', (e) => {
     modalBody.show();
 })
 
-modal.addEventListener('submit', async function (e) {
-    e.preventDefault();
+saveBtn.addEventListener('click', async (e) => {
+    let text = modalName.value
+    let cleaned = text.replace(/[ \t]/g, '')
 
-    if (modalName.length < 4) {
-        alert("Название задачи должно содержать минимум 4 символа.");
-        return;
-    }
+    if (cleaned.length < 4) {
+        toast.show()
+    } else {
 
-    const status = getStatus(modalStatus.value)
-    const priority = getPriority(modalPriority.value)
-    const deadline = modalDeadline.value?.trim() === "" ? null : modalDeadline.value
+        const priority = Object.keys(Priority)[modalPriority.value]
 
-    let task = new Task(modalName.value, modalDescription.value, new Date(deadline).toISOString(), status, priority);
+        const { cleanedName, editedPriority } = assignPriority(modalName.value, priority);
 
-    if(isNewTask) {
+        let deadline = modalDeadline.value?.trim() === "" ? null : modalDeadline.value
 
-        const response = await fetch(host + "/tasks", {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                name: task.name,
-                description: task.description,
-                deadline: task.deadline,
-                status: task.status,
-                priority: task.priority,
-            }),
-        });
+        let { cleanedNameAgain, editedDeadline } = assignDeadline(cleanedName, deadline);
 
-        if (response.ok) {
-            const newTask = await response.json();
-            task.id = newTask.id;
-            task.createdOn = newTask.createdOn;
-            task.modifiedOn = newTask.modifiedOn;
-        } else console.error("Ошибка при создании задачи");
+        if (editedDeadline !== null) editedDeadline = new Date(editedDeadline).toISOString()
+        let status = Object.keys(Status)[modalStatus.value]
+        status = defineStatus(deadline, status)
 
-        table.unshift(task)
+        let task = new Task(cleanedNameAgain, modalDescription.value, editedDeadline, status, editedPriority);
 
-        let htmlTask = createHtmlTask(task)
-        htmlTask.dataset.id = task.id
-        todolist.children[2].append(htmlTask)
-    }
-    else {
-        const response = await fetch(host + `/tasks/edit/${idTask}`,
-            {
-                method: 'PATCH',
+        if (isNewTask) {
+
+            const response = await fetch(host + "/tasks", {
+                method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -121,15 +111,56 @@ modal.addEventListener('submit', async function (e) {
                     deadline: task.deadline,
                     status: task.status,
                     priority: task.priority,
-                })
-            }).then(r => r.text())
+                }),
+            });
 
-        if (response.ok) {
-            task = await response.json();
-            currentTaskElement = createHtmlTask(task)
-        } else console.error("Ошибка при редактировании задачи");
+            if (response.ok) {
+                const newTask = await response.json();
+                task.id = newTask.id;
+                task.createdOn = newTask.createdOn;
+                task.modifiedOn = newTask.modifiedOn;
+            } else console.error("Ошибка при создании задачи");
+
+            table.unshift(task)
+            sortByDeadlineAscending()
+
+            renderTasks()
+
+        } else {
+
+            const response = await fetch(host + `/tasks/edit/${idTask}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        name: task.name,
+                        description: task.description,
+                        deadline: task.deadline,
+                        status: task.status,
+                        priority: task.priority,
+                    }),
+                });
+
+            if (response.ok) {
+                task = await response.json();
+                currentTaskElement = createHtmlTask(task)
+                replaceTaskInTable(idTask, task)
+                sortByDeadlineAscending()
+                renderTasks()
+            } else console.error("Ошибка при редактировании задачи");
+        }
+        modalBody.hide()
     }
 })
+
+function replaceTaskInTable(idTask, task) {
+    const index = table.findIndex(t => t.id === idTask);
+    if (index !== -1) {
+        table[index] = task;
+    }
+}
 
 
 function createHtmlTask(task) {
@@ -141,23 +172,6 @@ function createHtmlTask(task) {
     return newTask
 }
 
-function formatDate(isoString) {
-    const date = new Date(isoString);
-
-    const get = {
-            hours: date.getUTCHours(),
-            minutes: date.getUTCMinutes(),
-            day: date.getUTCDate(),
-            month: date.getUTCMonth() + 1,
-            year: date.getUTCFullYear()
-        }
-
-    const pad = n => n.toString().padStart(2, '0');
-
-    return `${pad(get.day)}.${pad(get.month)}.${get.year} ${pad(get.hours)}:${pad(get.minutes)}`;
-}
-
-
 function setValuesToShortTask(newTask, task) {
     if(task.status === 'Completed' || task.status === 'Late') {
         newTask.children[0].children[0].children[0].checked = true
@@ -167,7 +181,7 @@ function setValuesToShortTask(newTask, task) {
         newTask.children[0].children[1].children[1].children[0].textContent = "-"
     }
     else {
-        newTask.children[0].children[1].children[1].children[0].textContent = formatDate(task.deadline)
+        newTask.children[0].children[1].children[1].children[0].textContent = toLocalDatetimeInputValue(new Date(task.deadline), false)
     }
     task.status = defineStatus(task.deadline, task.status)
     newTask.children[0].children[1].children[1].children[1].textContent = Status[task.status]
@@ -176,25 +190,29 @@ function setValuesToShortTask(newTask, task) {
 function setValuesToModal(task) {
     modalName.value = task.name
     modalDescription.value = task.description
-    modalDeadline.value = task.deadline
-    modalStatus.value = task.status
-    modalPriority.value = task.priority
-    modalCreatedOn.value = formatDate(task.createdOn)
-    modalModifiedOn.value = formatDate(task.modifiedOn)
+    modalDeadline.value = task.deadline === null ? "" : toLocalDatetimeInputValue(new Date(task.deadline), true)
+    modalStatus.value = Object.keys(Status).indexOf(task.status)
+    modalPriority.value = Object.keys(Priority).indexOf(task.priority)
+    modalCreatedOn.value = toLocalDatetimeInputValue(new Date(task.createdOn), false)
+    modalModifiedOn.value = toLocalDatetimeInputValue(new Date(task.modifiedOn), false)
+}
+
+function toLocalDatetimeInputValue(date, format) {
+    const pad = (n) => n.toString().padStart(2, '0');
+
+    if(format) return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    else return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function setDefaultValuesToModal() {
     modalName.value = "Новая задача"
     modalDescription.value = ""
     modalDeadline.value = ""
-    modalStatus.value = "Active"
-    modalPriority.value = "Normal"
-}
-
-function addListenersToModal(modal, task) {
-    modal.children[0].children[0].children[0].addEventListener('input', (e) => {
-        task.name = modal.children[0].children[0].children[0].value
-    })
+    modalStatus.value = 0
+    modalPriority.value = 0
+    let date = new Date().toISOString();
+    modalCreatedOn.value = toLocalDatetimeInputValue(new Date(date), false)
+    modalModifiedOn.value = toLocalDatetimeInputValue(new Date(date), false)
 }
 
 function addListenersToNewTask(newTask, task) {
@@ -216,14 +234,19 @@ function addListenersToNewTask(newTask, task) {
         fetch(host + `/tasks/${task.id}/state`,
             {
                 method: 'PATCH',
-                body: String({Status: task.status})
-            }).then(r => r.text())
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(task.status)
+            }).then(r => {
+            setValuesToShortTask(newTask, task);
+        })
     })
 
-    newTask.children[0].children[1].addEventListener('click', (event) => {
+    newTask.children[0].children[1].addEventListener('click', async (event) => {
         isNewTask = 0
         currentTaskElement.innerHTML = newTask.innerHTML
-        idTask = event.currentTarget.dataset.id
+        idTask = task.id
 
         setValuesToModal(task)
         modalBody.show()
@@ -272,11 +295,89 @@ function switchStatus(deadline, status) {
 function defineStatus(deadline, status) {
     let currDate = new Date().toISOString();
 
-    if (status === "Active" && deadline < currDate) {
-        return "Overdue"
+    if (deadline !== null) {
+        if(deadline < currDate) {
+            if(status === "Active")
+                return "Overdue"
+            else if (status === "Completed")
+                return "Late"
+        }
+        else {
+            if(status === "Overdue")
+                return "Active"
+            else if(status === "Late")
+                return "Completed"
+        }
     }
-    else return status
+    else {
+        if(status === "Overdue")
+            return "Active"
+        else if(status === "Late")
+            return "Completed"
+    }
+    return status
 }
+
+function assignPriority(name, priority) {
+    let cleanedName = name;
+    let editedPriority = priority;
+
+    if (editedPriority === "Medium") {
+        for (const [macro, value] of Object.entries(macros)) {
+            if (name.includes(macro)) {
+                editedPriority = value;
+                cleanedName = name.replace(macro, '').trim();
+                break;
+            }
+        }
+    }
+
+    return { cleanedName, editedPriority };
+}
+
+function assignDeadline(name, deadline) {
+    let cleanedNameAgain = name;
+    let editedDeadline = deadline;
+
+    if (deadline == null) {
+        const regex = /!before\s+(\d{2}[.-]\d{2}[.-]\d{4})/i;
+        const match = name.match(regex);
+
+        if (match !== null) {
+            const rawDate = match[1].replace(/-/g, '.');
+            const [day, month, year] = rawDate.split('.');
+            const formattedDate = `${year}-${month}-${day}`;
+
+            const dateObj = new Date(formattedDate);
+            if (!isNaN(dateObj.getTime())) {
+                editedDeadline = formattedDate;
+                cleanedNameAgain = name.replace(regex, '').trim();
+            }
+        }
+    }
+
+    return { cleanedNameAgain, editedDeadline };
+}
+
+
+function sortByDeadlineAscending() {
+    table.sort((a, b) => {
+        if (a.deadline === null && b.deadline === null) return 0;
+        if (a.deadline === null) return 1;
+        if (b.deadline === null) return -1;
+        return new Date(a.deadline) - new Date(b.deadline);
+    });
+}
+
+function renderTasks() {
+    const listContainer = todolist.children[2];
+    listContainer.innerHTML = ""; // Очистить список
+    table.forEach(task => {
+        const taskElement = createHtmlTask(task);
+        listContainer.appendChild(taskElement);
+    });
+}
+
 
 
 window.onload = async function () {
@@ -288,10 +389,6 @@ window.onload = async function () {
     /** @type {{ todoItems: any[] }} */
     const json = await response.json();
     table = json.todoItems
-
-
-    for (let i = 0; i < table.length; i++) {
-        let newTask = createHtmlTask(table[i])
-        todolist.children[2].append(newTask)
-    }
+    sortByDeadlineAscending()
+    renderTasks()
 }
