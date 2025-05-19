@@ -17,6 +17,15 @@
 </head>
 <body>
 
+<div class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" id="toast" style="z-index: 1080;">
+    <div class="d-flex">
+        <div class="toast-body">
+            Название задачи должно содержать минимум 4 символа!
+        </div>
+        <button type="button" class="btn-close btn-close-black me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+</div>
+
 <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
      aria-labelledby="staticBackdropLabel">
     <form class="modal-dialog modal-dialog-centered" id="modal">
@@ -30,7 +39,7 @@
                     <div class="horizontal">
                         <p class="text-muted">Приоритет</p>
                         <select class="form-select mb-3" id="priority">
-                            <option selected>Средний</option>
+                            <option value="0" selected>Средний</option>
                             <option value="1">Низкий</option>
                             <option value="2">Высокий</option>
                             <option value="3">Критический</option>
@@ -39,7 +48,7 @@
                     <div class="horizontal">
                         <p class="text-muted">Статус</p>
                         <select class="form-select mb-3" id="status" disabled>
-                            <option selected>Активно</option>
+                            <option value="0" selected>Активно</option>
                             <option value="1">Выполнено</option>
                             <option value="2">Просрочено</option>
                             <option value="3">Выполнено с опозданием</option>
@@ -69,7 +78,7 @@
 
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" id="saveBtn">Сохранить</button>
+                <button type="button" class="btn btn-primary" id="saveBtn">Сохранить</button>
             </div>
         </div>
     </form>
